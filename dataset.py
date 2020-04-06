@@ -8,7 +8,7 @@ import torchvision
 from torch.utils import data
 
 import glob
-
+from collections import OrderedDict
 class DAVIS_MO_Test(data.Dataset):
     # for multi object, do shuffling
 
@@ -84,6 +84,54 @@ class DAVIS_MO_Test(data.Dataset):
             Ms = torch.from_numpy(self.All_to_onehot(N_masks).copy()).float()
             num_objects = torch.LongTensor([int(self.num_objects[video])])
             return Fs, Ms, num_objects, info
+
+
+class CustomDataset(data.Dataset):
+    def __init__(self,root,videos,single_object, transform):
+        self.root = root
+        self.mask_root = os.path.join(root,'masks')
+        self.image_root = os.path.join(root,'frames')
+
+        self.videos = OrderedDict()
+        self.transform  =transform
+
+        with open(os.path.join(root,videos),'r') as lines:
+            for line in lines:
+                name = line.rstrip('\n')
+                num_frame = len(glob.glob(os.path.join(self.image_root,name,'*.jpg')))
+                mask = np.array(Image.open(os.path.join(self.mask_root,name,'00000.png')).convert('P'))
+                num_objects = np.max(mask)
+                shape = np.shape(mask)
+                self.videos[name] = {'name':name,'num_frame': num_frame, 'num_objects':num_objects, 'shape':shape}
+            self.K = 11
+            self.single_object = single_object
+
+    def __len__(self):
+        return len(self.videos)
+
+    def __getitem__(self, item):
+        video = list(self.videos.items())[item]
+        name, num_frame,num_objects, shape = video
+        frames = []
+        # get frames
+        for i in range(num_frame):
+            f = self.transform(Image.open(os.path.join(self.image_root,name,f'{i:05d}.png')))
+            frames.append(f)
+        frames = torch.stack(f,1)
+
+        # get first mask
+        m = self.transform(Image.open(os.path.join(self.mask_root,name,'00000.png')).convert('P'))
+        if self.single_object:
+
+            Ms = torch.from_numpy(self.All_to_onehot(m.unsqueeze(0)).copy()).float()
+            num_objects = torch.LongTensor([int(1)])
+            return Fs, Ms, num_objects, info
+        # else:
+        #     Ms = torch.from_numpy(self.All_to_onehot(N_masks).copy()).float()
+        #     num_objects = torch.LongTensor([int(self.num_objects[video])])
+        #     return Fs, Ms, num_objects, info
+
+
 
 
 
