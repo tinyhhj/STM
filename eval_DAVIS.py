@@ -59,7 +59,7 @@ if VIZ:
     print('--- Require FFMPEG for encoding, Check folder ./viz')
 
 
-palette = Image.open(DATA_ROOT + '/Annotations/480p/blackswan/00000.png').getpalette()
+palette = Image.open(DATA_ROOT + '/Annotations/480p/blackswan/00000.png').convert('P').getpalette()
 
 def Run_video(Fs, Ms, num_frames, num_objects, Mem_every=None, Mem_number=None):
     # initialize storage tensors
@@ -93,13 +93,13 @@ def Run_video(Fs, Ms, num_frames, num_objects, Mem_every=None, Mem_number=None):
         if t-1 in to_memorize:
             keys, values = this_keys, this_values
         
-    pred = np.argmax(Es[0].cpu().numpy(), axis=0).astype(np.uint8)
+    pred = np.argmax(Es[0].cpu().numpy(), axis=0).astype(np.uint8) * 255
     return pred, Es
 
 
 
 Testset = DAVIS_MO_Test(DATA_ROOT, resolution='480p', imset='20{}/{}.txt'.format(YEAR,SET), single_object=(YEAR==16))
-Testloader = data.DataLoader(Testset, batch_size=1, shuffle=False, num_workers=2, pin_memory=True)
+Testloader = data.DataLoader(Testset, batch_size=1, shuffle=False, num_workers=0, pin_memory=True)
 
 model = nn.DataParallel(STM())
 if torch.cuda.is_available():

@@ -76,7 +76,7 @@ class DAVIS_MO_Test(data.Dataset):
         
         Fs = torch.from_numpy(np.transpose(N_frames.copy(), (3, 0, 1, 2)).copy()).float()
         if self.single_object:
-            N_masks = (N_masks > 0.5).astype(np.uint8) * (N_masks < 255).astype(np.uint8)
+            N_masks = (N_masks > 0.5).astype(np.uint8) #* (N_masks < 255).astype(np.uint8)
             Ms = torch.from_numpy(self.All_to_onehot(N_masks).copy()).float()
             num_objects = torch.LongTensor([int(1)])
             return Fs, Ms, num_objects, info
