@@ -183,7 +183,7 @@ class KeyValue(nn.Module):
 
 
 class STM(nn.Module):
-    def __init__(self):
+    def __init__(self,config):
         super(STM, self).__init__()
         self.Encoder_M = Encoder_M() 
         self.Encoder_Q = Encoder_Q() 
@@ -193,11 +193,12 @@ class STM(nn.Module):
 
         self.Memory = Memory()
         self.Decoder = Decoder(256)
+        self.config = config
  
     def Pad_memory(self, mems, num_objects, K):
         pad_mems = []
         for mem in mems:
-            pad_mem = ToCuda(torch.zeros(1, K, mem.size()[1], 1, mem.size()[2], mem.size()[3]))
+            pad_mem = ToCuda(torch.zeros(1, K, mem.size()[1], 1, mem.size()[2], mem.size()[3])) if self.config.g else torch.zeros(1, K, mem.size()[1], 1, mem.size()[2], mem.size()[3])
             pad_mem[0,1:num_objects+1,:,0] = mem
             pad_mems.append(pad_mem)
         return pad_mems
